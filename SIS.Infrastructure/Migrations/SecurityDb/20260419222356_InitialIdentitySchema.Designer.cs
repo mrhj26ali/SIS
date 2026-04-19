@@ -12,8 +12,8 @@ using SIS.Infrastructure.Persistence.Contexts;
 namespace SIS.Infrastructure.Migrations.SecurityDb
 {
     [DbContext(typeof(SecurityDbContext))]
-    [Migration("20260414091227_InitialIdentity")]
-    partial class InitialIdentity
+    [Migration("20260419222356_InitialIdentitySchema")]
+    partial class InitialIdentitySchema
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
