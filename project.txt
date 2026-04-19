@@ -348,6 +348,7 @@ C:.
 |   |           |   SIS.APIs.MvcApplicationPartsAssemblyInfo.cache
 |   |           |   SIS.APIs.MvcApplicationPartsAssemblyInfo.cs
 |   |           |   SIS.APIs.pdb
+|   |           |   SIS.APIs.sourcelink.json
 |   |           |   staticwebassets.build.endpoints.json
 |   |           |   staticwebassets.build.json
 |   |           |   staticwebassets.build.json.cache
@@ -376,8 +377,17 @@ C:.
 |   |               SIS.Domain.pdb
 |   |               
 |   +---DTOs
-|   |       StudentListDto.cs
-|   |       
+|   |   +---Course
+|   |   |       CourseListDto.cs
+|   |   |       CreateCourseDto.cs
+|   |   |       UpdateCourseDto.cs
+|   |   |       
+|   |   \---Student
+|   |           CreateStudentDTO.cs
+|   |           StudentDetailDTO.cs
+|   |           StudentListDto.cs
+|   |           UpdateStudentDTO.cs
+|   |           
 |   \---obj
 |       |   project.assets.json
 |       |   project.nuget.cache
@@ -399,6 +409,7 @@ C:.
 |               |   SIS.Application.GeneratedMSBuildEditorConfig.editorconfig
 |               |   SIS.Application.GlobalUsings.g.cs
 |               |   SIS.Application.pdb
+|               |   SIS.Application.sourcelink.json
 |               |   
 |               +---ref
 |               |       SIS.Application.dll
@@ -448,6 +459,7 @@ C:.
 |               |   SIS.Domain.GeneratedMSBuildEditorConfig.editorconfig
 |               |   SIS.Domain.GlobalUsings.g.cs
 |               |   SIS.Domain.pdb
+|               |   SIS.Domain.sourcelink.json
 |               |   
 |               +---ref
 |               |       SIS.Domain.dll
@@ -603,6 +615,7 @@ C:.
     |           |   SIS.Infrastructure.genruntimeconfig.cache
     |           |   SIS.Infrastructure.GlobalUsings.g.cs
     |           |   SIS.Infrastructure.pdb
+    |           |   SIS.Infrastructure.sourcelink.json
     |           |   
     |           +---ref
     |           |       SIS.Infrastructure.dll
@@ -611,6 +624,11 @@ C:.
     |                   SIS.Infrastructure.dll
     |                   
     +---Persistence
+    |   +---Configurations
+    |   |       CourseConfiguration.cs
+    |   |       StudentConfiguration.cs
+    |   |       StudentCourseConfiguration.cs
+    |   |       
     |   \---Contexts
     |           ApplicationDbContext.cs
     |           SecurityDbContext.cs
@@ -863,7 +881,86 @@ namespace SIS.APIs.Controllers
 
 
 
-// File: SIS.Application\DTOs\StudentListDto.cs
+// File: SIS.Application\DTOs\Course\CourseListDto.cs
+
+namespace SIS.Application.DTOs.Course;
+
+public class CourseListDto
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public int EnrolledStudentsCount { get; set; }
+    public DateTime CreatedAt { get; set; }
+}
+
+
+// File: SIS.Application\DTOs\Course\CreateCourseDto.cs
+
+namespace SIS.Application.DTOs.Course;
+
+public class CreateCourseDto
+{
+    public string Name { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+}
+
+
+// File: SIS.Application\DTOs\Course\UpdateCourseDto.cs
+
+namespace SIS.Application.DTOs.Course;
+
+public class UpdateCourseDto
+{
+    public string Name { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+}
+
+
+// File: SIS.Application\DTOs\Student\CreateStudentDTO.cs
+
+namespace SIS.Application.DTOs.Student;
+
+public class CreateStudentDto
+{
+    public string FirstName { get; set; } = string.Empty;
+    public string LastName { get; set; } = string.Empty;
+    public string PhoneNumber { get; set; } = string.Empty;
+    public int Age { get; set; }
+    public string Password { get; set; } = string.Empty;
+    public string StudentNumber { get; set; } = string.Empty;
+    public List<int> CourseIds { get; set; } = new();
+}
+
+
+// File: SIS.Application\DTOs\Student\StudentDetailDTO.cs
+
+namespace SIS.Application.DTOs.Student;
+
+public class StudentDetailDto
+{
+    public int Id { get; set; }
+    public string FirstName { get; set; } = string.Empty;
+    public string LastName { get; set; } = string.Empty;
+    public string FullName => $"{FirstName} {LastName}".Trim();
+    public string StudentNumber { get; set; } = string.Empty;
+    public string PhoneNumber { get; set; } = string.Empty;
+    public int Age { get; set; }
+    public bool IsActive { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+    public List<CourseInfoDto> Courses { get; set; } = new();
+}
+
+public class CourseInfoDto
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+}
+
+
+// File: SIS.Application\DTOs\Student\StudentListDto.cs
 
 using System;
 using System.Collections.Generic;
@@ -880,6 +977,21 @@ namespace SIS.Application.DTOs
     }
 }
 
+
+
+// File: SIS.Application\DTOs\Student\UpdateStudentDTO.cs
+
+namespace SIS.Application.DTOs.Student;
+
+public class UpdateStudentDto
+{
+    public string FirstName { get; set; } = string.Empty;
+    public string LastName { get; set; } = string.Empty;
+    public string PhoneNumber { get; set; } = string.Empty;
+    public int Age { get; set; }
+    public bool IsActive { get; set; }
+    public List<int> CourseIds { get; set; } = new();
+}
 
 
 // File: SIS.Domain\AppUser.cs
@@ -938,25 +1050,28 @@ namespace SIS.Domain
 
 // File: SIS.Domain\Student.cs
 
-// SIS.Domain/Student.cs
-namespace SIS.Domain;
+using SIS.Domain.Common;
+using System;
+using System.Collections.Generic;
+using System.Text;
 
-public class Student : BaseEntity
+namespace SIS.Domain
 {
-    public string FirstName { get; set; } = string.Empty;
-    public string LastName { get; set; } = string.Empty;
-    public string PhoneNumber { get; set; } = string.Empty;
-    public int Age { get; set; }
-    public bool IsActive { get; set; }
-    public string Password { get; set; } = string.Empty; // Will be hashed
-    public string StudentNumber { get; set; } = string.Empty;
-    
-    // Navigation (no EF attributes)
-    public ICollection<StudentCourse> StudentCourses { get; set; } = new List<StudentCourse>();
-    
-    // Domain helper
-    public string FullName => $"{FirstName} {LastName}".Trim();
+    public class Student : BaseEntity
+    {
+        public string FirstName { get; set; }
+        public string LastName { get; set; }
+        public string PhoneNumber { get; set; }
+        public int Age { get; set; }
+        public bool IsActive { get; set; }
+        public string Password { get; set; }
+        public string StudentNumber { get; set; }
+
+        // Navigation Property
+        public ICollection<StudentCourse> StudentCourses { get; set; }
+    }
 }
+
 
 
 // File: SIS.Domain\StudentCourse.cs
@@ -2341,41 +2456,175 @@ namespace SIS.Infrastructure.Migrations.SecurityDb
 
 
 
+// File: SIS.Infrastructure\Persistence\Configurations\CourseConfiguration.cs
+
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using SIS.Domain;
+
+namespace SIS.Infrastructure.Persistence.Configurations;
+
+public class CourseConfiguration : IEntityTypeConfiguration<Course>
+{
+    public void Configure(EntityTypeBuilder<Course> builder)
+    {
+        builder.ToTable("Courses");
+        
+        builder.HasKey(c => c.Id);
+        
+        builder.Property(c => c.Name)
+            .IsRequired()
+            .HasMaxLength(200);
+            
+        builder.Property(c => c.Description)
+            .HasMaxLength(1000);
+            
+        builder.Property(c => c.CreatedAt)
+            .IsRequired()
+            .HasDefaultValueSql("GETUTCDATE()");
+            
+        builder.Property(c => c.UpdatedAt)
+            .IsRequired(false);
+        
+        // Navigation: Course -> StudentCourses
+        builder.HasMany(c => c.StudentCourses)
+            .WithOne(sc => sc.Course)
+            .HasForeignKey(sc => sc.CourseId)
+            .OnDelete(DeleteBehavior.Cascade);
+    }
+}
+
+
+// File: SIS.Infrastructure\Persistence\Configurations\StudentConfiguration.cs
+
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using SIS.Domain;
+
+namespace SIS.Infrastructure.Persistence.Configurations;
+
+public class StudentConfiguration : IEntityTypeConfiguration<Student>
+{
+    public void Configure(EntityTypeBuilder<Student> builder)
+    {
+        builder.ToTable("Students");
+        
+        // Primary Key
+        builder.HasKey(s => s.Id);
+        
+        // Properties with constraints
+        builder.Property(s => s.FirstName)
+            .IsRequired()
+            .HasMaxLength(100);
+            
+        builder.Property(s => s.LastName)
+            .IsRequired()
+            .HasMaxLength(100);
+            
+        builder.Property(s => s.StudentNumber)
+            .IsRequired()
+            .HasMaxLength(20);
+            
+        builder.HasIndex(s => s.StudentNumber)
+            .IsUnique()
+            .HasDatabaseName("IX_Students_StudentNumber");
+            
+        builder.Property(s => s.PhoneNumber)
+            .HasMaxLength(20);
+            
+        builder.Property(s => s.Password)
+            .IsRequired(); // Will store hashed password
+            
+        builder.Property(s => s.Age)
+            .IsRequired();
+            
+        builder.Property(s => s.IsActive)
+            .HasDefaultValue(true);
+            
+        // Timestamps
+        builder.Property(s => s.CreatedAt)
+            .IsRequired()
+            .HasDefaultValueSql("GETUTCDATE()");
+            
+        builder.Property(s => s.UpdatedAt)
+            .IsRequired(false);
+        
+        // Navigation: Student -> StudentCourses
+        builder.HasMany(s => s.StudentCourses)
+            .WithOne(sc => sc.Student)
+            .HasForeignKey(sc => sc.StudentId)
+            .OnDelete(DeleteBehavior.Cascade);
+    }
+}
+
+
+// File: SIS.Infrastructure\Persistence\Configurations\StudentCourseConfiguration.cs
+
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using SIS.Domain;
+
+namespace SIS.Infrastructure.Persistence.Configurations;
+
+public class StudentCourseConfiguration : IEntityTypeConfiguration<StudentCourse>
+{
+    public void Configure(EntityTypeBuilder<StudentCourse> builder)
+    {
+        builder.ToTable("StudentCourses");
+        
+        builder.HasKey(sc => sc.Id);
+        
+        // Composite unique constraint: one student can enroll in a course only once
+        builder.HasIndex(sc => new { sc.StudentId, sc.CourseId })
+            .IsUnique()
+            .HasDatabaseName("IX_StudentCourses_Student_Course");
+        
+        builder.Property(sc => sc.CreatedAt)
+            .IsRequired()
+            .HasDefaultValueSql("GETUTCDATE()");
+            
+        builder.Property(sc => sc.UpdatedAt)
+            .IsRequired(false);
+        
+        // Relationships
+        builder.HasOne(sc => sc.Student)
+            .WithMany(s => s.StudentCourses)
+            .HasForeignKey(sc => sc.StudentId)
+            .OnDelete(DeleteBehavior.Cascade);
+            
+        builder.HasOne(sc => sc.Course)
+            .WithMany(c => c.StudentCourses)
+            .HasForeignKey(sc => sc.CourseId)
+            .OnDelete(DeleteBehavior.Cascade);
+    }
+}
+
+
 // File: SIS.Infrastructure\Persistence\Contexts\ApplicationDbContext.cs
 
 using Microsoft.EntityFrameworkCore;
 using SIS.Domain;
-using System;
-using System.Collections.Generic;
-using System.Reflection.Emit;
-using System.Text;
+using SIS.Infrastructure.Persistence.Configurations;
 
-namespace SIS.Infrastructure.Persistence.Contexts
+namespace SIS.Infrastructure.Persistence.Contexts;
+
+public class ApplicationDbContext : DbContext
 {
-    public class ApplicationDbContext : DbContext
+    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) 
+        : base(options) { }
+
+    public DbSet<Student> Students { get; set; }
+    public DbSet<Course> Courses { get; set; }
+    public DbSet<StudentCourse> StudentCourses { get; set; }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
-
-        public DbSet<Student> Students { get; set; }
-        public DbSet<Course> Courses { get; set; }
-        public DbSet<StudentCourse> StudentCourses { get; set; }
-
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-            // Configure Many-to-Many Relationships
-            modelBuilder.Entity<StudentCourse>()
-                .HasOne(sc => sc.Student)
-                .WithMany(s => s.StudentCourses)
-                .HasForeignKey(sc => sc.StudentId);
-
-            modelBuilder.Entity<StudentCourse>()
-                .HasOne(sc => sc.Course)
-                .WithMany(c => c.StudentCourses)
-                .HasForeignKey(sc => sc.CourseId);
-        }
+        base.OnModelCreating(modelBuilder);
+        
+        // Apply all configuration classes from this assembly
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
     }
 }
-
 
 
 // File: SIS.Infrastructure\Persistence\Contexts\SecurityDbContext.cs

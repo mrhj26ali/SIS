@@ -1,13 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
+using System.Threading.Tasks;
 
-namespace SIS.Domain.Common.Interfaces
+namespace SIS.Domain.Common.Interfaces;
+
+public interface IUnitOfWork : IDisposable
 {
-    public interface IUnitOfWork : IDisposable
-    {
-        IStudentRepository Students { get; }
-        IGenericRepository<Course> Courses { get; }
-        Task<int> CompleteAsync(); // Saves changes to the DB
-    }
+    IStudentRepository Students { get; }
+    ICourseRepository Courses { get; }
+    IStudentCourseRepository StudentCourses { get; }
+    Task<int> CompleteAsync(); // Saves all changes to DB
 }
