@@ -4,6 +4,7 @@ using SIS.Domain;
 using SIS.Domain.Common.Interfaces;
 using SIS.Infrastructure.Persistence.Contexts;
 using SIS.Infrastructure.Repositories;
+using SIS.Application.Interfaces;
 // ADD THESE USING STATEMENTS:
 using FluentValidation;
 using AutoMapper;
@@ -50,6 +51,9 @@ builder.Services.AddAutoMapper(cfg =>
 
 // ===== FIX #2: FluentValidation Registration (Requires package installed above) =====
 builder.Services.AddValidatorsFromAssemblyContaining<SIS.Application.Validators.Student.CreateStudentValidator>();
+
+builder.Services.AddScoped<IStudentService, SIS.Application.Services.StudentService>();
+builder.Services.AddScoped<ICourseService, SIS.Application.Services.CourseService>();
 
 var app = builder.Build();
 
