@@ -1,0 +1,88 @@
+services:
+
+  # ── RabbitMQ ────────────────────────────────────────────────────────────────
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: sis-rabbitmq
+    ports:
+      - "5672:5672"     # AMQP — used by MassTransit
+      - "15672:15672"   # Management UI — http://localhost:15672
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── SQL Server ───────────────────────────────────────────────────────────────
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sis-sqlserver
+    ports:
+      - "1433:1433"
+    environment:
+      SA_PASSWORD: "SIS_StrongPass123!"
+      ACCEPT_EULA: "Y"
+    healthcheck:
+      test: ["CMD", "/opt/mssql-tools18/bin/sqlcmd", "-S", "localhost",
+             "-U", "sa", "-P", "SIS_StrongPass123!", "-Q", "SELECT 1",
+             "-No", "-C"]
+      interval: 15s
+      timeout: 10s
+      retries: 8
+
+  # ── SIS Main API ─────────────────────────────────────────────────────────────
+  sis-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.sis
+    container_name: sis-api
+    ports:
+      - "5242:8080"     # http://localhost:5242/swagger
+    environment:
+      # Override connection strings to reach the sqlserver container
+      ConnectionStrings__DefaultConnection: >-
+        Server=sqlserver,1433;Database=SIS_BusinessDB;
+        User Id=sa;Password=SIS_StrongPass123!;
+        Encrypt=True;TrustServerCertificate=True;
+      ConnectionStrings__DefaultConnection0: >-
+        Server=sqlserver,1433;Database=SIS_IdentityDB;
+        User Id=sa;Password=SIS_StrongPass123!;
+        Encrypt=True;TrustServerCertificate=True;
+      # Override RabbitMQ host to reach the rabbitmq container
+      RabbitMQ__Host: rabbitmq
+      Jwt__Key: "YourSuperSecretKeyMustBeAtLeast32CharsLong1234567890!"
+      Jwt__Issuer: "SIS.API"
+      Jwt__Audience: "SIS.Client"
+      Jwt__ExpiryMinutes: "60"
+      ASPNETCORE_ENVIRONMENT: Development
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      sqlserver:
+        condition: service_healthy
+
+  # ── Logging Microservice ──────────────────────────────────────────────────────
+  logging-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.logging
+    container_name: sis-logging-api
+    ports:
+      - "5113:8080"     # http://localhost:5113/swagger
+    environment:
+      # Override connection string to reach the sqlserver container
+      ConnectionStrings__Default: >-
+        Server=sqlserver,1433;Database=SIS_LogDb;
+        User Id=sa;Password=SIS_StrongPass123!;
+        Encrypt=True;TrustServerCertificate=True;
+      # Override RabbitMQ host to reach the rabbitmq container
+      RabbitMQ__Host: rabbitmq
+      ASPNETCORE_ENVIRONMENT: Development
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      sqlserver:
+        condition: service_healthy

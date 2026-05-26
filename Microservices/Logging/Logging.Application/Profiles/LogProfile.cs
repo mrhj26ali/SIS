@@ -8,7 +8,10 @@ public class LoggingProfile : Profile
 {
     public LoggingProfile()
     {
-        CreateMap<CreateLogDto,Log>().ForMember(d => d.CreatedAt, opt => opt.Ignore())
-        .ForMember(d => d.Id, opt => opt.Ignore());
+        CreateMap<CreateLogDto, Log>()
+            .ForMember(d => d.CreatedAt, opt => opt.Ignore())
+            .ForMember(d => d.Id, opt => opt.Ignore());
+
+        CreateMap<Log, LogDto>();
     }
 }

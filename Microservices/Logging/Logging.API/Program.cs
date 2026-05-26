@@ -26,14 +26,15 @@ builder.Services.AddMassTransit(x =>
 {
     x.AddConsumer<LogMessageConsumer>();
     x.UsingRabbitMq((context, cfg) =>
+{
+    var host = builder.Configuration["RabbitMQ:Host"] ?? "localhost";
+    cfg.Host(host, "/", h =>
     {
-        cfg.Host("localhost", "/", h =>
-        {
-            h.Username("guest");
-            h.Password("guest");
-        });
-        cfg.ConfigureEndpoints(context);
+        h.Username("guest");
+        h.Password("guest");
     });
+    cfg.ConfigureEndpoints(context);
+});
 });
 builder.Services.AddControllers();
 // 4. Swagger & Endpoints
