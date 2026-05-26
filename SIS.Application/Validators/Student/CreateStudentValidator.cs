@@ -14,7 +14,6 @@ public class CreateStudentValidator : AbstractValidator<CreateStudentDto>
             .Matches(@"^STU-\d{6}$").WithMessage("Format: STU-123456")
             .MaximumLength(20);
         RuleFor(x => x.PhoneNumber).MaximumLength(20);
-        RuleFor(x => x.Password).MinimumLength(6);
         RuleFor(x => x.Age).InclusiveBetween(16, 100);
     }
 }

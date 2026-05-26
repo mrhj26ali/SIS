@@ -18,6 +18,12 @@ namespace SIS.Infrastructure.Repositories
                 .FirstOrDefaultAsync(s => s.StudentNumber == studentNumber);
         }
 
+        public async Task<Student?> GetByIdentityUserIdAsync(string identityUserId)
+        {
+            return await _context.Students
+                .FirstOrDefaultAsync(s => s.IdentityUserId == identityUserId);
+        }
+
         public async Task<Student?> GetStudentWithCoursesAsync(int id)
         {
             return await _context.Students

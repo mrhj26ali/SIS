@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SIS.Application.DTOs.Student;
@@ -16,7 +17,7 @@ public class StudentsController : ControllerBase
         _studentService = studentService;
     }
 
-    [AllowAnonymous]
+    [Authorize(Roles = "Admin,Staff")]
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
@@ -29,6 +30,9 @@ public class StudentsController : ControllerBase
     {
         try
         {
+            if (User.IsInRole("Student") && await IsStudentIdMismatch(id))
+                return Forbid();
+
             var student = await _studentService.GetByIdAsync(id);
             return Ok(student);
         }
@@ -38,13 +42,13 @@ public class StudentsController : ControllerBase
         }
     }
 
+    [Authorize(Roles = "Admin,Staff")]
     [HttpPost]
-    [AllowAnonymous] // Allow public registration
     public async Task<IActionResult> Create([FromBody] CreateStudentDto dto)
     {
         try
         {
-            var id = await _studentService.CreateAsync(dto);
+            var id = await _studentService.CreateAsync(dto, User.FindFirstValue(ClaimTypes.NameIdentifier));
             return CreatedAtAction(nameof(GetById), new { id }, id);
         }
         catch (Exception ex)
@@ -57,12 +61,13 @@ public class StudentsController : ControllerBase
         }
     }
 
+    [Authorize(Roles = "Admin,Staff")]
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateStudentDto dto)
     {
         try
         {
-            var result = await _studentService.UpdateAsync(id, dto);
+            var result = await _studentService.UpdateAsync(id, dto, User.FindFirstValue(ClaimTypes.NameIdentifier));
             return result ? NoContent() : NotFound();
         }
         catch (Exception ex) when (ex.GetType().Name == "NotFoundException")
@@ -75,12 +80,13 @@ public class StudentsController : ControllerBase
         }
     }
 
+    [Authorize(Roles = "Admin,Staff")]
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
         try
         {
-            var result = await _studentService.DeleteAsync(id);
+            var result = await _studentService.DeleteAsync(id, User.FindFirstValue(ClaimTypes.NameIdentifier));
             return result ? NoContent() : NotFound();
         }
         catch (Exception ex) when (ex.GetType().Name == "NotFoundException")
@@ -89,12 +95,16 @@ public class StudentsController : ControllerBase
         }
     }
 
+    [Authorize(Roles = "Admin,Staff,Student")]
     [HttpPost("{studentId}/courses/{courseId}")]
     public async Task<IActionResult> Enroll(int studentId, int courseId)
     {
         try
         {
-            var result = await _studentService.EnrollInCourseAsync(studentId, courseId);
+            if (User.IsInRole("Student") && await IsStudentIdMismatch(studentId))
+                return Forbid();
+
+            var result = await _studentService.EnrollInCourseAsync(studentId, courseId, User.FindFirstValue(ClaimTypes.NameIdentifier));
             return result ? Ok(new { message = "Enrolled successfully" }) : BadRequest();
         }
         catch (Exception ex)
@@ -103,17 +113,38 @@ public class StudentsController : ControllerBase
         }
     }
 
+    [Authorize(Roles = "Admin,Staff,Student")]
     [HttpDelete("{studentId}/courses/{courseId}")]
     public async Task<IActionResult> Unenroll(int studentId, int courseId)
     {
         try
         {
-            var result = await _studentService.UnenrollFromCourseAsync(studentId, courseId);
+            if (User.IsInRole("Student") && await IsStudentIdMismatch(studentId))
+                return Forbid();
+
+            var result = await _studentService.UnenrollFromCourseAsync(studentId, courseId, User.FindFirstValue(ClaimTypes.NameIdentifier));
             return result ? Ok(new { message = "Unenrolled successfully" }) : NotFound();
         }
         catch (Exception ex)
         {
             return NotFound(new { message = ex.Message });
+        }
+    }
+
+    private async Task<bool> IsStudentIdMismatch(int studentId)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId))
+            return true;
+
+        try
+        {
+            var currentStudent = await _studentService.GetByIdentityUserIdAsync(userId);
+            return currentStudent.Id != studentId;
+        }
+        catch
+        {
+            return true;
         }
     }
 }

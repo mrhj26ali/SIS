@@ -33,8 +33,9 @@ public class StudentConfiguration : IEntityTypeConfiguration<Student>
         builder.Property(s => s.PhoneNumber)
             .HasMaxLength(20);
             
-        builder.Property(s => s.Password)
-            .IsRequired(); // Will store hashed password
+        builder.Property(s => s.IdentityUserId)
+            .HasMaxLength(450)
+            .IsRequired(false);
             
         builder.Property(s => s.Age)
             .IsRequired();

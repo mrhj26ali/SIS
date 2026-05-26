@@ -1,31 +1,22 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
-
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
-
   <ItemGroup>
-    <!-- Swagger for Controllers (MVC) -->
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
-    
-    <!-- Authentication -->
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.5" />
-    
-    <!-- FluentValidation for ASP.NET Core -->
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.9.0" />
-    
-    <!-- EF Core Tools (Design Time) -->
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.5">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <!-- ADD THIS -->
+    <PackageReference Include="MassTransit.RabbitMQ" Version="8.3.2" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\SIS.Application\SIS.Application.csproj" />
     <ProjectReference Include="..\SIS.Infrastructure\SIS.Infrastructure.csproj" />
   </ItemGroup>
-
 </Project>

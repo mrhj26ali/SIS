@@ -8,6 +8,7 @@ namespace SIS.Domain.Common.Interfaces
     {
         // A domain-specific requirement: find a student by their unique number
         Task<Student?> GetByStudentNumberAsync(string studentNumber);
+        Task<Student?> GetByIdentityUserIdAsync(string identityUserId);
 
         // Include courses for the dashboard view
         Task<Student?> GetStudentWithCoursesAsync(int id);

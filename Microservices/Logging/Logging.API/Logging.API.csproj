@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- ✅ Use ONE Swashbuckle meta-package (not individual ones) -->
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+    
+    <!-- EF Core packages - ensure versions match -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.8">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    
+    <!-- MassTransit -->
+    <PackageReference Include="MassTransit.RabbitMQ" Version="8.3.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Logging.Application\Logging.Application.csproj" />
+    <ProjectReference Include="..\Logging.Infrastructure\Logging.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\SIS.Contracts\SIS.Contracts.csproj" />
+  </ItemGroup>
+</Project>

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using MassTransit;
 using SIS.Domain;
 using SIS.Domain.Common.Interfaces;
 using SIS.Infrastructure.Persistence.Contexts;
@@ -32,7 +33,7 @@ builder.Services.AddSwaggerGen(c =>
         Scheme = "Bearer",
         BearerFormat = "JWT",
         In = ParameterLocation.Header,
-        Description = "Enter 'Bearer' [space] and then your token"
+        Description = "Enter your token"
     });
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
@@ -86,7 +87,7 @@ builder.Services.AddAuthentication(x =>
     x.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(key),
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"] ?? "YourSuperSecretKeyMustBeAtLeast32Chars!")),
         ValidateIssuer = true,
         ValidIssuer = jwtSettings["Issuer"],
         ValidateAudience = true,
@@ -95,6 +96,8 @@ builder.Services.AddAuthentication(x =>
         ClockSkew = TimeSpan.Zero
     };
 });
+
+builder.Services.AddAuthorization();
 
 // 7. Application Services & Mappers
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -108,7 +111,17 @@ builder.Services.AddValidatorsFromAssemblyContaining<SIS.Application.Validators.
 builder.Services.AddScoped<IStudentService, SIS.Application.Services.StudentService>();
 builder.Services.AddScoped<ICourseService, SIS.Application.Services.CourseService>();
 builder.Services.AddScoped<SIS.Infrastructure.Seeding.RoleSeeder>();
-
+builder.Services.AddMassTransit(x =>
+{
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        cfg.Host("localhost", "/", h =>
+        {
+            h.Username("guest");
+            h.Password("guest");
+        });
+    });
+});
 var app = builder.Build();
 
 // Seed roles on startup (inside a scope)
@@ -130,4 +143,4 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-await app.RunAsync(); //  Must be awaited because of the async seeder call above
+await app.RunAsync(); 
