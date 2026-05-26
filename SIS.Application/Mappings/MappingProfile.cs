@@ -19,7 +19,6 @@ public class MappingProfile : Profile
         CreateMap<UpdateStudentDto, Student>()
             .ForMember(dest => dest.Id, opt => opt.Ignore())
             .ForMember(dest => dest.StudentNumber, opt => opt.Ignore())
-            .ForMember(dest => dest.Password, opt => opt.Ignore())
             .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
             .ForMember(dest => dest.StudentCourses, opt => opt.Ignore())
             .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(_ => DateTime.UtcNow));

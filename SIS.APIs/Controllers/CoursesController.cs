@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SIS.Application.DTOs.Course;
@@ -16,7 +17,7 @@ public class CoursesController : ControllerBase
         _courseService = courseService;
     }
 
-    [AllowAnonymous]
+    [Authorize]
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
@@ -38,12 +39,13 @@ public class CoursesController : ControllerBase
         }
     }
 
+    [Authorize(Roles = "Admin,Staff")]
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateCourseDto dto)
     {
         try
         {
-            var id = await _courseService.CreateAsync(dto);
+            var id = await _courseService.CreateAsync(dto, User.FindFirstValue(ClaimTypes.NameIdentifier));
             return CreatedAtAction(nameof(GetById), new { id }, id);
         }
         catch (Exception ex) when (ex.GetType().Name.Contains("Validation"))
@@ -52,12 +54,13 @@ public class CoursesController : ControllerBase
         }
     }
 
+    [Authorize(Roles = "Admin,Staff")]
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateCourseDto dto)
     {
         try
         {
-            var result = await _courseService.UpdateAsync(id, dto);
+            var result = await _courseService.UpdateAsync(id, dto, User.FindFirstValue(ClaimTypes.NameIdentifier));
             return result ? NoContent() : NotFound();
         }
         catch (Exception ex) when (ex.GetType().Name == "NotFoundException")
@@ -70,12 +73,13 @@ public class CoursesController : ControllerBase
         }
     }
 
+    [Authorize(Roles = "Admin,Staff")]
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
         try
         {
-            var result = await _courseService.DeleteAsync(id);
+            var result = await _courseService.DeleteAsync(id, User.FindFirstValue(ClaimTypes.NameIdentifier));
             return result ? NoContent() : NotFound();
         }
         catch (Exception ex)
@@ -83,4 +87,5 @@ public class CoursesController : ControllerBase
             return BadRequest(new { message = ex.Message });
         }
     }
+
 }

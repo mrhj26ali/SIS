@@ -1,6 +1,11 @@
 <Solution>
+  <Project Path="SIS.Contracts/SIS.Contracts.csproj" />
   <Project Path="SIS.APIs/SIS.APIs.csproj" />
   <Project Path="SIS.Application/SIS.Application.csproj" />
   <Project Path="SIS.Domain/SIS.Domain.csproj" />
   <Project Path="SIS.Infrastructure/SIS.Infrastructure.csproj" />
+  <Project Path="Microservices/Logging/Logging.API/Logging.API.csproj" />
+  <Project Path="Microservices/Logging/Logging.Application/Logging.Application.csproj" />
+  <Project Path="Microservices/Logging/Logging.Domain/Logging.Domain.csproj" />
+  <Project Path="Microservices/Logging/Logging.Infrastructure/Logging.Infrastructure.csproj" />
 </Solution>

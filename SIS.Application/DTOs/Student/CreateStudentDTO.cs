@@ -6,7 +6,7 @@ public class CreateStudentDto
     public string LastName { get; set; } = string.Empty;
     public string PhoneNumber { get; set; } = string.Empty;
     public int Age { get; set; }
-    public string Password { get; set; } = string.Empty;
     public string StudentNumber { get; set; } = string.Empty;
+    public string? IdentityUserId { get; set; }
     public List<int> CourseIds { get; set; } = new();
 }
