@@ -1,0 +1,34 @@
+# ── Build stage ──────────────────────────────────────────────────────────────
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /src
+
+# Copy solution and all project files first (layer-cache friendly)
+COPY SIS.slnx ./
+COPY SIS.Contracts/SIS.Contracts.csproj               SIS.Contracts/
+COPY SIS.Domain/SIS.Domain.csproj                     SIS.Domain/
+COPY SIS.Application/SIS.Application.csproj           SIS.Application/
+COPY SIS.Infrastructure/SIS.Infrastructure.csproj     SIS.Infrastructure/
+COPY SIS.APIs/SIS.APIs.csproj                         SIS.APIs/
+COPY Microservices/Logging/Logging.Domain/Logging.Domain.csproj                         Microservices/Logging/Logging.Domain/
+COPY Microservices/Logging/Logging.Application/Logging.Application.csproj               Microservices/Logging/Logging.Application/
+COPY Microservices/Logging/Logging.Infrastructure/Logging.Infrastructure.csproj         Microservices/Logging/Logging.Infrastructure/
+COPY Microservices/Logging/Logging.API/Logging.API.csproj                               Microservices/Logging/Logging.API/
+
+# Restore only SIS.APIs and its dependency tree
+RUN dotnet restore SIS.APIs/SIS.APIs.csproj
+
+# Copy all source
+COPY . .
+
+# Publish SIS.APIs
+RUN dotnet publish SIS.APIs/SIS.APIs.csproj -c Release -o /app/publish --no-restore
+
+# ── Runtime stage ─────────────────────────────────────────────────────────────
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
+WORKDIR /app
+COPY --from=build /app/publish .
+
+EXPOSE 8080
+ENV ASPNETCORE_URLS=http://+:8080
+
+ENTRYPOINT ["dotnet", "SIS.APIs.dll"]

@@ -56,11 +56,7 @@ public class CourseService : ICourseService
         var course = _mapper.Map<Course>(dto);
         await _unitOfWork.Courses.AddAsync(course);
         await _unitOfWork.CompleteAsync();
-        await _publishEndpoint.Publish(new LogMessage
-        {
-            Message = $"Created course {course.Id}",
-            CreatedBy = BuildCreatedBy(identityUserId)
-        });
+        await _publishEndpoint.Publish(new LogMessage($"Created course {course.Id}", BuildCreatedBy(identityUserId)));
         return course.Id;
     }
 
@@ -74,11 +70,8 @@ public class CourseService : ICourseService
         if (dto.Description != null) course.Description = dto.Description;
         course.UpdatedAt = DateTime.UtcNow;
         _unitOfWork.Courses.Update(course);
-        await _publishEndpoint.Publish(new LogMessage
-        {
-            Message = $"Updated course {id}",
-            CreatedBy = BuildCreatedBy(identityUserId)
-        });
+        await _publishEndpoint.Publish(new LogMessage($"Updated course {id}", BuildCreatedBy(identityUserId)));
+
         return await _unitOfWork.CompleteAsync() > 0;
     }
 
@@ -88,11 +81,8 @@ public class CourseService : ICourseService
         if (course == null) throw new NotFoundException(nameof(Course), id);
         if (course.StudentCourses.Any()) throw new ConflictException("Cannot delete a course with active enrollments.");
         _unitOfWork.Courses.Delete(course);
-        await _publishEndpoint.Publish(new LogMessage
-        {
-            Message = $"Deleted course {id}",
-            CreatedBy = BuildCreatedBy(identityUserId)
-        });
+        await _publishEndpoint.Publish(new LogMessage($"Deleted course {id}", BuildCreatedBy(identityUserId)));
+
         return await _unitOfWork.CompleteAsync() > 0;
     }
 

@@ -114,13 +114,14 @@ builder.Services.AddScoped<SIS.Infrastructure.Seeding.RoleSeeder>();
 builder.Services.AddMassTransit(x =>
 {
     x.UsingRabbitMq((context, cfg) =>
+{
+    var host = builder.Configuration["RabbitMQ:Host"] ?? "localhost";
+    cfg.Host(host, "/", h =>
     {
-        cfg.Host("localhost", "/", h =>
-        {
-            h.Username("guest");
-            h.Password("guest");
-        });
+        h.Username("guest");
+        h.Password("guest");
     });
+});
 });
 var app = builder.Build();
 

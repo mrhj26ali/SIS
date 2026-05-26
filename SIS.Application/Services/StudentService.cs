@@ -68,11 +68,8 @@ public class StudentService : IStudentService
         await _unitOfWork.CompleteAsync();
 
         _logger.LogInformation("Student created with ID {Id}", student.Id);
-        await _publishEndpoint.Publish(new LogMessage
-        {
-            Message = $"Student {student.Id} created",
-            CreatedBy = BuildCreatedBy("StudentService", identityUserId)
-        });
+        await _publishEndpoint.Publish(new LogMessage($"Student {student.Id} created", BuildCreatedBy("StudentService", identityUserId)));
+
 
         return student.Id;
     }
@@ -115,11 +112,8 @@ public class StudentService : IStudentService
         
         if (result)
         {
-            await _publishEndpoint.Publish(new LogMessage
-            {
-                Message = $"Student {id} updated",
-                CreatedBy = BuildCreatedBy("StudentService", identityUserId)
-            });
+            await _publishEndpoint.Publish(new LogMessage($"Student {id} updated", BuildCreatedBy("StudentService", identityUserId)));
+
         }
         
         return result;
@@ -138,11 +132,8 @@ public class StudentService : IStudentService
         
         if (result)
         {
-            await _publishEndpoint.Publish(new LogMessage
-            {
-                Message = $"Student {id} deleted",
-                CreatedBy = BuildCreatedBy("StudentService", identityUserId)
-            });
+            await _publishEndpoint.Publish(new LogMessage($"Student {id} deleted", BuildCreatedBy("StudentService", identityUserId)));
+
         }
         
         return result;
@@ -165,11 +156,8 @@ public class StudentService : IStudentService
         
         if (result)
         {
-            await _publishEndpoint.Publish(new LogMessage
-            {
-                Message = $"Student {studentId} enrolled in course {courseId}",
-                CreatedBy = BuildCreatedBy("StudentService", identityUserId)
-            });
+            await _publishEndpoint.Publish(new LogMessage($"Student {studentId} enrolled in course {courseId}", BuildCreatedBy("StudentService", identityUserId)));
+
         }
 
         return result;
@@ -185,11 +173,8 @@ public class StudentService : IStudentService
         
         if (result)
         {
-            await _publishEndpoint.Publish(new LogMessage
-            {
-                Message = $"Student {studentId} unenrolled from course {courseId}",
-                CreatedBy = BuildCreatedBy("StudentService", identityUserId)
-            });
+            await _publishEndpoint.Publish(new LogMessage($"Student {studentId} unenrolled from course {courseId}", BuildCreatedBy("StudentService", identityUserId)));
+
         }
 
         return result;

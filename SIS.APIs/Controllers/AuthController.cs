@@ -1,3 +1,4 @@
+using MassTransit;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -5,6 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 using SIS.APIs.Requests;
 using SIS.Application.DTOs.Student;
 using SIS.Application.Interfaces;
+using SIS.Contracts;
 using SIS.Domain;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -20,17 +22,20 @@ public class AuthController : ControllerBase
     private readonly SignInManager<AppUser> _signInManager;
     private readonly IConfiguration _config;
     private readonly IStudentService _studentService;
+    private readonly IPublishEndpoint _publishEndpoint;
 
     public AuthController(
         UserManager<AppUser> userManager,
         SignInManager<AppUser> signInManager,
         IConfiguration config,
-        IStudentService studentService)
+        IStudentService studentService,
+        IPublishEndpoint publishEndpoint)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _config = config;
         _studentService = studentService;
+        _publishEndpoint = publishEndpoint;
     }
 
     [HttpPost("register")]
@@ -38,10 +43,18 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Register([FromBody] RegisterRequest model)
     {
         if (await _userManager.FindByEmailAsync(model.Email) != null)
+        {
+            await _publishEndpoint.Publish(new LogMessage(
+                $"Registration failed — email already exists: {model.Email}", "Auth"));
             return BadRequest(new { message = "Email already registered" });
+        }
 
         if (await _studentService.StudentNumberExistsAsync(model.StudentNumber))
+        {
+            await _publishEndpoint.Publish(new LogMessage(
+                $"Registration failed — student number already exists: {model.StudentNumber}", "Auth"));
             return Conflict(new { message = "Student number already exists." });
+        }
 
         var user = new AppUser
         {
@@ -53,7 +66,12 @@ public class AuthController : ControllerBase
 
         var result = await _userManager.CreateAsync(user, model.Password);
         if (!result.Succeeded)
+        {
+            var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+            await _publishEndpoint.Publish(new LogMessage(
+                $"Registration failed for {model.Email} — {errors}", "Auth"));
             return BadRequest(result.Errors);
+        }
 
         await _userManager.AddToRoleAsync(user, "Student");
 
@@ -74,12 +92,18 @@ public class AuthController : ControllerBase
         catch (Exception ex)
         {
             await _userManager.DeleteAsync(user);
+            await _publishEndpoint.Publish(new LogMessage(
+                $"Registration rolled back for {model.Email} — {ex.Message}", "Auth"));
+
             if (ex.GetType().Name == "ConflictException")
                 return Conflict(new { message = ex.Message });
             if (ex.GetType().Name.Contains("Validation"))
                 return BadRequest(new { errors = ex.Message });
             return BadRequest(new { message = ex.Message });
         }
+
+        await _publishEndpoint.Publish(new LogMessage(
+            $"New student registered: {user.Email} (ID: {user.Id})", "Auth"));
 
         var token = await GenerateJwtToken(user);
         return Ok(new AuthResponse { Email = user.Email ?? string.Empty, Token = token });
@@ -90,7 +114,11 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> AddStaff([FromBody] AddStaffRequest model)
     {
         if (await _userManager.FindByEmailAsync(model.Email) != null)
+        {
+            await _publishEndpoint.Publish(new LogMessage(
+                $"AddStaff failed — email already exists: {model.Email}", "Auth"));
             return BadRequest(new { message = "Email already registered" });
+        }
 
         var user = new AppUser
         {
@@ -102,9 +130,18 @@ public class AuthController : ControllerBase
 
         var result = await _userManager.CreateAsync(user, model.Password);
         if (!result.Succeeded)
+        {
+            var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+            await _publishEndpoint.Publish(new LogMessage(
+                $"AddStaff failed for {model.Email} — {errors}", "Auth"));
             return BadRequest(result.Errors);
+        }
 
         await _userManager.AddToRoleAsync(user, "Staff");
+
+        await _publishEndpoint.Publish(new LogMessage(
+            $"New staff account created: {user.Email} (ID: {user.Id})", "Auth"));
+
         return Created(string.Empty, new { user.Id, user.Email });
     }
 
@@ -114,11 +151,22 @@ public class AuthController : ControllerBase
     {
         var user = await _userManager.FindByEmailAsync(model.Email);
         if (user == null)
+        {
+            await _publishEndpoint.Publish(new LogMessage(
+                $"Login failed — user not found: {model.Email}", "Auth"));
             return Unauthorized(new { message = "Invalid credentials" });
+        }
 
         var result = await _signInManager.CheckPasswordSignInAsync(user, model.Password, false);
         if (!result.Succeeded)
+        {
+            await _publishEndpoint.Publish(new LogMessage(
+                $"Login failed — wrong password for: {model.Email}", "Auth"));
             return Unauthorized(new { message = "Invalid credentials" });
+        }
+
+        await _publishEndpoint.Publish(new LogMessage(
+            $"User logged in: {user.Email} (ID: {user.Id})", "Auth"));
 
         var token = await GenerateJwtToken(user);
         return Ok(new AuthResponse { Email = user.Email ?? string.Empty, Token = token });
