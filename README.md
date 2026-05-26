@@ -267,6 +267,6 @@ Notes
 -----
 - The solution uses a repository and unit-of-work pattern. See `SIS.Infrastructure/Repositories` for implementations and `SIS.Domain/Common/Interfaces` for interfaces.
 - The Identity database (`SIS_IdentityDB`) and the business database (`SIS_BusinessDB`) are intentionally separate. `SecurityDbContext` handles Identity; `ApplicationDbContext` handles domain data.
-- MassTransit version `8.3.2` is used consistently across all projects. Do not mix versions.
+- MassTransit version `8.3.2` is used consistently across all projects.
 - The `SIS.Contracts` package references MassTransit so the `LogMessage` record is recognized as a proper message type during serialization.
 - When running via Docker Compose, the RabbitMQ host is injected via the `RabbitMQ__Host` environment variable. Both `Program.cs` files read `builder.Configuration["RabbitMQ:Host"] ?? "localhost"` so they work correctly in both Docker and local `dotnet run` scenarios.
