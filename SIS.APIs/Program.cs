@@ -9,6 +9,7 @@ using SIS.Domain.Common.Interfaces;
 using SIS.Infrastructure.Persistence.Contexts;
 using SIS.Infrastructure.Repositories;
 using SIS.Application.Interfaces;
+using SIS.Infrastructure.Webhooks;
 using FluentValidation;
 using AutoMapper;
 using System.Text;
@@ -111,6 +112,10 @@ builder.Services.AddValidatorsFromAssemblyContaining<SIS.Application.Validators.
 builder.Services.AddScoped<IStudentService, SIS.Application.Services.StudentService>();
 builder.Services.AddScoped<ICourseService, SIS.Application.Services.CourseService>();
 builder.Services.AddScoped<SIS.Infrastructure.Seeding.RoleSeeder>();
+builder.Services.AddSingleton<WebhookChannel>();
+builder.Services.AddScoped<IWebhookPublisher, WebhookPublisher>();
+builder.Services.AddHostedService<WebhookDispatcherWorker>();
+builder.Services.AddHttpClient("webhook", c => c.Timeout = TimeSpan.FromSeconds(10));
 builder.Services.AddMassTransit(x =>
 {
     x.UsingRabbitMq((context, cfg) =>

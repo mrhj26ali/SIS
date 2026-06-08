@@ -19,6 +19,7 @@ public class StudentService : IStudentService
     private readonly IValidator<UpdateStudentDto> _updateValidator;
     private readonly ILogger<StudentService> _logger;
     private readonly IPublishEndpoint _publishEndpoint;
+    private readonly IWebhookPublisher _webhookPublisher;
 
     public StudentService(
         IUnitOfWork unitOfWork,
@@ -26,7 +27,8 @@ public class StudentService : IStudentService
         IValidator<CreateStudentDto> createValidator,
         IValidator<UpdateStudentDto> updateValidator,
         ILogger<StudentService> logger,
-        IPublishEndpoint publishEndpoint)
+        IPublishEndpoint publishEndpoint,
+        IWebhookPublisher webhookPublisher)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
@@ -34,6 +36,7 @@ public class StudentService : IStudentService
         _updateValidator = updateValidator;
         _logger = logger;
         _publishEndpoint = publishEndpoint;
+        _webhookPublisher = webhookPublisher;
     }
 
     public async Task<IEnumerable<StudentListDto>> GetAllAsync()
@@ -158,6 +161,15 @@ public class StudentService : IStudentService
         {
             await _publishEndpoint.Publish(new LogMessage($"Student {studentId} enrolled in course {courseId}", BuildCreatedBy("StudentService", identityUserId)));
 
+            await _webhookPublisher.PublishAsync("student.enrolled", new
+            {
+                studentId = student.Id,
+                studentNumber = student.StudentNumber,
+                studentName = $"{student.FirstName} {student.LastName}",
+                courseId = course.Id,
+                courseName = course.Name,
+                enrolledAt = DateTime.UtcNow
+            });
         }
 
         return result;
