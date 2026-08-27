@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SIS.Domain;
 using SIS.Infrastructure.Persistence.Configurations;
+using SIS.Infrastructure.Persistence.Entities;
 
 namespace SIS.Infrastructure.Persistence.Contexts;
 
@@ -12,6 +13,8 @@ public class ApplicationDbContext : DbContext
     public DbSet<Student> Students { get; set; }
     public DbSet<Course> Courses { get; set; }
     public DbSet<StudentCourse> StudentCourses { get; set; }
+    public DbSet<WebhookSubscription> WebhookSubscriptions { get; set; }
+    public DbSet<WebhookDeliveryLog> WebhookDeliveryLogs { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
